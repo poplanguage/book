@@ -1,0 +1,156 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import type { GetStaticPaths } from 'astro';
+import {
+  bookLocales,
+  bookVersions,
+  isBookVersionAvailable,
+  orderedBookVersions,
+  type BookLocale,
+  type BookVersion,
+} from '../../../data/versions';
+import { bookPath } from '../../../utils/paths';
+
+interface Props {
+  locale: BookLocale;
+  version: BookVersion;
+  fallbackLocale: BookLocale;
+}
+
+interface Copy {
+  title: string;
+  description: string;
+  eyebrow: string;
+  action: string;
+  alternateAction: string;
+  note: string;
+}
+
+const copy: Record<BookLocale, (version: string, fallbackLanguage: string) => Copy> = {
+  en: (version, fallbackLanguage) => ({
+    title: 'This version is not available in English yet',
+    description: `Pop Book ${version} has not been published in English, but the complete edition is available in ${fallbackLanguage}.`,
+    eyebrow: `Pop Book ${version}`,
+    action: `Read in ${fallbackLanguage}`,
+    alternateAction: 'Open an English version',
+    note: `You will continue to version ${version} in ${fallbackLanguage}.`,
+  }),
+  'pt-br': (version, fallbackLanguage) => ({
+    title: 'Esta versão ainda não está disponível em português',
+    description: `O conteúdo do Pop Book ${version} ainda não foi traduzido para português do Brasil, mas a edição completa está disponível em ${fallbackLanguage}.`,
+    eyebrow: `Pop Book ${version}`,
+    action: `Ler em ${fallbackLanguage}`,
+    alternateAction: 'Abrir uma versão em português',
+    note: `Você continuará na versão ${version}, em ${fallbackLanguage}.`,
+  }),
+};
+
+const languageNames: Record<BookLocale, Record<BookLocale, string>> = {
+  en: { en: 'English', 'pt-br': 'Brazilian Portuguese' },
+  'pt-br': { en: 'inglês', 'pt-br': 'português do Brasil' },
+};
+
+export const getStaticPaths = (() =>
+  bookVersions.flatMap((version) =>
+    bookLocales.flatMap((locale) => {
+      if (isBookVersionAvailable(version, locale)) return [];
+
+      const fallbackLocale = version.availableLocales[0];
+      if (!fallbackLocale) return [];
+
+      return [{
+        params: { locale, version: version.slug },
+        props: { locale, version, fallbackLocale },
+      }];
+    }),
+  )) satisfies GetStaticPaths;
+
+const { locale, version, fallbackLocale } = Astro.props;
+const fallbackLanguage = languageNames[locale][fallbackLocale];
+const text = copy[locale](version.version, fallbackLanguage);
+const fallbackHref = bookPath(`${fallbackLocale}/${version.slug}/`);
+const translatedVersion = orderedBookVersions.find((candidate) =>
+  isBookVersionAvailable(candidate, locale),
+);
+const translatedHref = translatedVersion
+  ? bookPath(`${locale}/${translatedVersion.slug}/`)
+  : bookPath(`${locale}/`);
+const illustration = `
+  <svg viewBox="0 0 320 260" role="img" aria-label="Document awaiting translation" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#e0f7ff"/>
+        <stop offset="1" stop-color="#7dd3fc"/>
+      </linearGradient>
+      <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#38bdf8"/>
+        <stop offset="1" stop-color="#087ea4"/>
+      </linearGradient>
+    </defs>
+    <circle cx="160" cy="130" r="112" fill="#38bdf8" opacity=".08"/>
+    <circle cx="160" cy="130" r="84" fill="none" stroke="#38bdf8" stroke-width="2" opacity=".18" stroke-dasharray="7 9"/>
+    <path d="M83 42h104l50 50v126H83z" fill="url(#paper)"/>
+    <path d="M187 42v50h50" fill="#bae6fd"/>
+    <path d="M187 42l50 50h-50z" fill="#7dd3fc"/>
+    <path d="M111 119h78M111 145h98M111 171h64" fill="none" stroke="#0c4a6e" stroke-width="9" stroke-linecap="round" opacity=".62"/>
+    <circle cx="218" cy="184" r="48" fill="url(#badge)"/>
+    <path d="M194 174h48M218 160v4c0 17-10 31-25 38M204 174c3 13 13 24 28 30" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+`;
+---
+
+<StarlightPage
+  hasSidebar={false}
+  frontmatter={{
+    title: text.title,
+    description: text.description,
+    pagefind: false,
+    template: 'splash',
+    hero: {
+      title: text.title,
+      tagline: text.description,
+      image: { html: illustration },
+      actions: [
+        { text: text.action, link: fallbackHref, icon: 'right-arrow' },
+        { text: text.alternateAction, link: translatedHref, variant: 'minimal' },
+      ],
+    },
+  }}
+>
+  <aside class="availability-note" aria-label={text.eyebrow}>
+    <span class="status-dot" aria-hidden="true"></span>
+    <span><strong>{text.eyebrow}</strong> · {text.note}</span>
+  </aside>
+</StarlightPage>
+
+<style>
+  .availability-note {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 42rem;
+    margin: -2rem auto 2rem;
+    border: 1px solid color-mix(in srgb, var(--sl-color-accent) 32%, var(--sl-color-hairline));
+    border-radius: 0.85rem;
+    background: color-mix(in srgb, var(--sl-color-accent-low) 55%, transparent);
+    padding: 0.9rem 1rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .availability-note strong { color: var(--sl-color-white); }
+
+  .status-dot {
+    flex: 0 0 auto;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    background: var(--sl-color-accent);
+    box-shadow: 0 0 0 0.3rem color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
+  }
+
+  @media (max-width: 49.99rem) {
+    .availability-note { margin-top: 0; }
+  }
+</style>

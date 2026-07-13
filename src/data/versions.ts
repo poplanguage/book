@@ -1,12 +1,21 @@
+export const bookLocales = ['en', 'pt-br'] as const;
+
+export type BookLocale = (typeof bookLocales)[number];
+
 export interface BookVersion {
   version: string;
   slug: string;
+  availableLocales: readonly BookLocale[];
 }
 
 export const bookVersions: BookVersion[] = [
-  { version: '0.1.0-rc.3', slug: '010-rc3' },
-  { version: '0.1.0-rc.2', slug: '010-rc2' },
+  { version: '0.1.0-rc.3', slug: '010-rc3', availableLocales: ['en', 'pt-br'] },
+  { version: '0.1.0-rc.2', slug: '010-rc2', availableLocales: ['en'] },
 ];
+
+export function isBookVersionAvailable(version: BookVersion, locale: string): boolean {
+  return version.availableLocales.some((availableLocale) => availableLocale === locale);
+}
 
 function compareIdentifiers(left: string, right: string): number {
   const leftNumber = /^\d+$/.test(left) ? Number(left) : undefined;
