@@ -4,6 +4,7 @@ export interface BookVersion {
 }
 
 export const bookVersions: BookVersion[] = [
+  { version: '0.1.0-rc.3', slug: '010-rc3' },
   { version: '0.1.0-rc.2', slug: '010-rc2' },
 ];
 

@@ -7,6 +7,18 @@ function flatten(entries: SidebarEntry[]): SidebarLink[] {
   return entries.flatMap((entry) => (entry.type === 'group' ? flatten(entry.entries) : entry));
 }
 
+function normalizeVersionPath(path: string): string {
+  return path.replace(/\/0\.1\.0-rc\.(\d+)(?=\/|$)/g, '/010-rc$1');
+}
+
+function normalizeVersionLinks(entries: SidebarEntry[]): SidebarEntry[] {
+  return entries.map((entry) =>
+    entry.type === 'link'
+      ? { ...entry, href: normalizeVersionPath(entry.href) }
+      : { ...entry, entries: normalizeVersionLinks(entry.entries) },
+  );
+}
+
 function forVersion(entries: SidebarEntry[], versionPath: string): SidebarEntry[] {
   const filtered: SidebarEntry[] = [];
 
@@ -35,7 +47,7 @@ export const onRequest = defineRouteMiddleware((context) => {
     attrs: { 'data-pagefind-filter': 'version', content: selectedVersion },
   });
 
-  route.sidebar = forVersion(route.sidebar, `/010-${selectedVersion}/`);
+  route.sidebar = forVersion(normalizeVersionLinks(route.sidebar), `/010-${selectedVersion}/`);
 
   const links = flatten(route.sidebar);
   const currentIndex = links.findIndex((link) => link.isCurrent);

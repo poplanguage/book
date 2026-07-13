@@ -1,6 +1,9 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import { createRequire } from 'node:module';
+import { readdirSync, readFileSync } from 'node:fs';
+import { basename, extname, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const pagefindUiPath = createRequire(import.meta.url)
   .resolve('@pagefind/default-ui')
@@ -10,6 +13,120 @@ const repository = process.env.GITHUB_REPOSITORY;
 const [owner, repositoryName] = repository?.split('/') ?? [];
 const isUserPage = repositoryName?.toLowerCase() === `${owner?.toLowerCase()}.github.io`;
 const base = repositoryName && !isUserPage ? `/${repositoryName}` : undefined;
+
+const englishDocsRoot = fileURLToPath(new URL('./src/content/docs/en/', import.meta.url));
+
+function unquote(value) {
+  const first = value.at(0);
+  const last = value.at(-1);
+  return (first === '"' && last === '"') || (first === "'" && last === "'")
+    ? value.slice(1, -1)
+    : value;
+}
+
+function pageMetadata(path) {
+  const source = readFileSync(path, 'utf8');
+  const frontmatter = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '';
+  const title = frontmatter.match(/^title:\s*(.+)$/m)?.[1]?.trim();
+  const order = frontmatter.match(/^\s+order:\s*(-?\d+(?:\.\d+)?)\s*$/m)?.[1];
+
+  return {
+    label: title ? unquote(title) : humanize(basename(path, extname(path))),
+    order: order === undefined ? Number.POSITIVE_INFINITY : Number(order),
+  };
+}
+
+function humanize(value) {
+  const words = value.replace(/[-_]+/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function pageSlug(path) {
+  return relative(englishDocsRoot, path)
+    .replaceAll('\\', '/')
+    .replace(/\.(?:md|mdx)$/, '')
+    .replace(/\/index$/, '')
+    .replace(/^0\.1\.0-rc\.(\d+)(?=\/|$)/, '010-rc$1');
+}
+
+function pageLink(path) {
+  return `/${pageSlug(path)}/`;
+}
+
+function documentationFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).filter(
+    (entry) => !entry.name.startsWith('.') && (entry.isDirectory() || /\.mdx?$/.test(entry.name)),
+  );
+}
+
+function orderedSidebarNodes(directory) {
+  const nodes = [];
+
+  for (const entry of documentationFiles(directory)) {
+    const path = join(directory, entry.name);
+
+    if (!entry.isDirectory()) {
+      if (/^index\.mdx?$/.test(entry.name)) continue;
+
+      const metadata = pageMetadata(path);
+      nodes.push({
+        order: metadata.order,
+        label: metadata.label,
+        item: { label: metadata.label, link: pageLink(path) },
+      });
+      continue;
+    }
+
+    const childNodes = orderedSidebarNodes(path);
+    const indexEntry = documentationFiles(path).find(
+      (child) => !child.isDirectory() && /^index\.mdx?$/.test(child.name),
+    );
+
+    if (indexEntry) {
+      const indexPath = join(path, indexEntry.name);
+      const metadata = pageMetadata(indexPath);
+      nodes.push({
+        order: metadata.order,
+        label: metadata.label,
+        item: {
+          label: metadata.label,
+          collapsed: true,
+          items: [
+            {
+              label: metadata.label,
+              link: pageLink(indexPath),
+              attrs: { 'data-category-index': 'true' },
+            },
+            ...childNodes.map(({ item }) => item),
+          ],
+        },
+      });
+
+      continue;
+    }
+
+    if (childNodes.length > 0) {
+      const label = humanize(entry.name);
+      nodes.push({
+        order: childNodes[0].order,
+        label,
+        item: {
+          label,
+          collapsed: true,
+          items: childNodes.map(({ item }) => item),
+        },
+      });
+    }
+  }
+
+  return nodes.sort(
+    (left, right) => left.order - right.order || left.label.localeCompare(right.label),
+  );
+}
+
+function documentationSidebar(directory) {
+  return orderedSidebarNodes(join(englishDocsRoot, directory)).map(({ item }) => item);
+}
 
 const popLanguage = {
   name: 'pop',
@@ -32,8 +149,15 @@ const popLanguage = {
       patterns: [{ name: 'constant.character.escape.pop', match: '\\\\.' }],
     },
     {
+      name: 'string.interpolated.pop',
+      begin: '`',
+      end: '`',
+      patterns: [{ name: 'constant.character.escape.pop', match: '\\\\.' }],
+    },
+    {
       name: 'keyword.control.pop',
-      match: '\\b(?:if|then|else|while|do|repeat|until|for|match|when|return|end)\\b',
+      match:
+        '\\b(?:if|then|elseif|else|while|do|repeat|until|for|break|continue|match|when|return|end)\\b',
     },
     {
       name: 'keyword.declaration.pop',
@@ -47,8 +171,15 @@ const popLanguage = {
     },
     { name: 'storage.type.pop', match: '\\b[A-Z][A-Za-z0-9_]*\\b' },
     { name: 'entity.name.function.pop', match: '\\b[a-z][A-Za-z0-9_]*(?=\\s*\\()' },
+    {
+      name: 'constant.numeric.float.pop',
+      match: '\\b[0-9][0-9_]*(?:\\.[0-9][0-9_]*)?(?:[eE][+-]?[0-9][0-9_]*)\\b|\\b[0-9][0-9_]*\\.[0-9][0-9_]*\\b',
+    },
     { name: 'constant.numeric.integer.pop', match: '\\b[0-9][0-9_]*\\b' },
-    { name: 'keyword.operator.symbol.pop', match: '==|~=|[+\\-*/%<>=|?]' },
+    {
+      name: 'keyword.operator.symbol.pop',
+      match: '\\.\\.=|\\+=|-=|\\*=|/=|%=|<=|>=|==|~=|\\.\\.|[+\\-*/%<>=|?]',
+    },
   ],
 };
 
@@ -99,78 +230,79 @@ export default defineConfig({
       components: {
         Header: './src/components/Header.astro',
         MobileMenuFooter: './src/components/MobileMenuFooter.astro',
+        Sidebar: './src/components/Sidebar.astro',
       },
       sidebar: [
         {
           label: '1. Getting Started',
           translations: { 'pt-br': '1. Primeiros passos' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/start' } },
-            { autogenerate: { directory: '0.1.0-rc.3/start' } },
+            ...documentationSidebar('0.1.0-rc.2/start'),
+            ...documentationSidebar('0.1.0-rc.3/start'),
           ],
         },
         {
           label: '2. Language Fundamentals',
           translations: { 'pt-br': '2. Fundamentos da linguagem' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/language' } },
-            { autogenerate: { directory: '0.1.0-rc.3/language' } },
+            ...documentationSidebar('0.1.0-rc.2/language'),
+            ...documentationSidebar('0.1.0-rc.3/language'),
           ],
         },
         {
           label: '3. Types',
           translations: { 'pt-br': '3. Tipos' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/types' } },
-            { autogenerate: { directory: '0.1.0-rc.3/types' } },
+            ...documentationSidebar('0.1.0-rc.2/types'),
+            ...documentationSidebar('0.1.0-rc.3/types'),
           ],
         },
         {
           label: '4. Data and Abstraction',
           translations: { 'pt-br': '4. Dados e abstração' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/data' } },
-            { autogenerate: { directory: '0.1.0-rc.3/data' } },
+            ...documentationSidebar('0.1.0-rc.2/data'),
+            ...documentationSidebar('0.1.0-rc.3/data'),
           ],
         },
         {
           label: '5. Modules and Packages',
           translations: { 'pt-br': '5. Módulos e pacotes' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/organization' } },
-            { autogenerate: { directory: '0.1.0-rc.3/organization' } },
+            ...documentationSidebar('0.1.0-rc.2/organization'),
+            ...documentationSidebar('0.1.0-rc.3/organization'),
           ],
         },
         {
           label: '6. Compile Time',
           translations: { 'pt-br': '6. Tempo de compilação' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/compile-time' } },
-            { autogenerate: { directory: '0.1.0-rc.3/compile-time' } },
+            ...documentationSidebar('0.1.0-rc.2/compile-time'),
+            ...documentationSidebar('0.1.0-rc.3/compile-time'),
           ],
         },
         {
           label: '7. Runtime and Backends',
           translations: { 'pt-br': '7. Runtime e backends' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/execution' } },
-            { autogenerate: { directory: '0.1.0-rc.3/execution' } },
+            ...documentationSidebar('0.1.0-rc.2/execution'),
+            ...documentationSidebar('0.1.0-rc.3/execution'),
           ],
         },
         {
           label: '8. Tooling',
           translations: { 'pt-br': '8. Ferramentas' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/tooling' } },
-            { autogenerate: { directory: '0.1.0-rc.3/tooling' } },
+            ...documentationSidebar('0.1.0-rc.2/tooling'),
+            ...documentationSidebar('0.1.0-rc.3/tooling'),
           ],
         },
         {
           label: '9. Reference',
           translations: { 'pt-br': '9. Referência' },
           items: [
-            { autogenerate: { directory: '0.1.0-rc.2/reference' } },
-            { autogenerate: { directory: '0.1.0-rc.3/reference' } },
+            ...documentationSidebar('0.1.0-rc.2/reference'),
+            ...documentationSidebar('0.1.0-rc.3/reference'),
           ],
         },
         {

@@ -1,0 +1,202 @@
+---
+import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+
+type SidebarEntry = StarlightRouteData['sidebar'][number];
+type SidebarLink = Extract<SidebarEntry, { type: 'link' }>;
+
+interface Props {
+  entries: SidebarEntry[];
+  nested?: boolean;
+}
+
+const { entries, nested = false } = Astro.props;
+
+function containsCurrent(items: SidebarEntry[]): boolean {
+  return items.some((item) =>
+    item.type === 'link' ? item.isCurrent : containsCurrent(item.entries),
+  );
+}
+
+function categoryIndex(entry: SidebarEntry): SidebarLink | undefined {
+  if (entry.type !== 'group') return undefined;
+  const first = entry.entries[0];
+  if (first?.type !== 'link') return undefined;
+  return first.attrs['data-category-index'] === 'true' ? first : undefined;
+}
+
+function normalizedHref(href: string): string {
+  return href.replace(/\/0\.1\.0-rc\.(\d+)(?=\/|$)/g, '/010-rc$1');
+}
+
+function categoryLabel(label: string): string {
+  return label.replace(/\s+guides$/i, '');
+}
+---
+
+<ul class:list={{ 'top-level': !nested }}>
+  {
+    entries.map((entry) => {
+      if (entry.type === 'link') {
+        return (
+          <li>
+            <a
+              href={normalizedHref(entry.href)}
+              aria-current={entry.isCurrent ? 'page' : undefined}
+              class:list={[{ large: !nested }, entry.attrs.class]}
+              {...entry.attrs}
+            >
+              <span>{entry.label}</span>
+            </a>
+          </li>
+        );
+      }
+
+      const index = categoryIndex(entry);
+      const children = index ? entry.entries.slice(1) : entry.entries;
+
+      return (
+        <li>
+          <details open={containsCurrent(entry.entries) || !entry.collapsed}>
+            <summary>
+              {index ? (
+                <a
+                  class="category-link"
+                  href={normalizedHref(index.href)}
+                  aria-current={index.isCurrent ? 'page' : undefined}
+                  onclick="event.stopPropagation()"
+                >
+                  <span>{categoryLabel(entry.label)}</span>
+                </a>
+              ) : (
+                <span class="group-label large">{categoryLabel(entry.label)}</span>
+              )}
+              <span class="category-toggle" aria-hidden="true">
+                <svg class="caret" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1 1 0 0 0 0-1.42Z" />
+                </svg>
+              </span>
+            </summary>
+            {children.length > 0 && <Astro.self entries={children} nested />}
+          </details>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<style>
+  @layer starlight.core {
+    ul {
+      --sl-sidebar-item-padding-inline: 0.5rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      overflow-wrap: anywhere;
+    }
+
+    ul ul li {
+      margin-inline-start: var(--sl-sidebar-item-padding-inline);
+      border-inline-start: 1px solid var(--sl-color-hairline-light);
+      padding-inline-start: var(--sl-sidebar-item-padding-inline);
+    }
+
+    .large {
+      font-size: var(--sl-text-lg);
+      font-weight: 600;
+      color: var(--sl-color-white);
+    }
+
+    .top-level > li + li {
+      margin-top: 0.75rem;
+    }
+
+    summary {
+      display: flex;
+      align-items: center;
+      padding: 0;
+      line-height: 1.4;
+      user-select: none;
+    }
+
+    summary::marker,
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .category-link,
+    .group-label {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .group-label {
+      padding: 0.3em var(--sl-sidebar-item-padding-inline);
+    }
+
+    .category-toggle {
+      align-self: stretch;
+      display: grid;
+      flex: 0 0 2rem;
+      cursor: pointer;
+      place-items: center;
+      color: var(--sl-color-gray-2);
+      border-radius: 0.25rem;
+    }
+
+    summary:hover .category-toggle,
+    summary:focus-visible .category-toggle {
+      color: var(--sl-color-white);
+      background: var(--sl-color-gray-6);
+    }
+
+    .caret {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    :global([dir='rtl']) .caret {
+      transform: rotateZ(180deg);
+    }
+
+    [open] > summary .caret {
+      transform: rotateZ(90deg);
+    }
+
+    a {
+      display: block;
+      border-radius: 0.25rem;
+      text-decoration: none;
+      color: var(--sl-color-gray-2);
+      padding: 0.3em var(--sl-sidebar-item-padding-inline);
+      line-height: 1.4;
+    }
+
+    a:hover,
+    a:focus {
+      color: var(--sl-color-white);
+    }
+
+    [aria-current='page'],
+    [aria-current='page']:hover,
+    [aria-current='page']:focus {
+      font-weight: 600;
+      color: var(--sl-color-text-invert);
+      background-color: var(--sl-color-text-accent);
+    }
+
+    @media (min-width: 50rem) {
+      .top-level > li + li {
+        margin-top: 0.5rem;
+      }
+
+      .large {
+        font-size: var(--sl-text-base);
+      }
+
+      a {
+        font-size: var(--sl-text-sm);
+      }
+    }
+  }
+</style>
