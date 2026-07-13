@@ -1,0 +1,36 @@
+---
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+import Search from '@astrojs/starlight/components/Search.astro';
+import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import VersionSelect from './VersionSelect.astro';
+---
+
+<div class="book-header">
+  <div class="title"><SiteTitle /></div>
+  <div class="search print:hidden"><Search /></div>
+  <nav class="controls sl-hidden md:sl-flex print:hidden" aria-label="Book preferences">
+    <VersionSelect />
+    <ThemeSelect />
+    <LanguageSelect />
+  </nav>
+</div>
+
+<style>
+  .book-header {
+    display: grid;
+    grid-template-columns: minmax(9rem, var(--sl-sidebar-width)) minmax(10rem, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    height: 100%;
+  }
+
+  .title { min-width: 0; overflow: hidden; }
+  .search { min-width: 0; max-width: 30rem; justify-self: center; width: 100%; }
+  .controls { align-items: center; gap: 0.5rem; }
+
+  @media (max-width: 49.99rem) {
+    .book-header { display: flex; justify-content: space-between; }
+    .search { max-width: 16rem; }
+  }
+</style>

@@ -1,0 +1,26 @@
+---
+import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import VersionSelect from './VersionSelect.astro';
+---
+
+<div class="mobile-preferences">
+  <VersionSelect />
+  <div class="preferences">
+    <ThemeSelect />
+    <LanguageSelect />
+  </div>
+</div>
+
+<style>
+  .mobile-preferences {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--sl-color-gray-6);
+    padding: 0.75rem 0;
+  }
+  .preferences { display: flex; align-items: center; gap: 0.5rem; }
+</style>

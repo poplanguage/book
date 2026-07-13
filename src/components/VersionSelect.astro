@@ -1,0 +1,48 @@
+---
+import { orderedBookVersions } from '../data/versions';
+
+const locale = Astro.locals.starlightRoute.locale ?? 'en';
+const currentPath = Astro.url.pathname;
+const base = import.meta.env.BASE_URL;
+const label = locale === 'pt-br' ? 'Versão' : 'Version';
+---
+
+<label class="version-select">
+  <span>{label}</span>
+  <select aria-label={label} data-version-select>
+    {
+      orderedBookVersions.map(({ version, slug }) => {
+        const href = `${base}${locale}/${slug}/`.replace(/\/+/g, '/');
+        return <option value={href} selected={currentPath.includes(`/${slug}/`)}>{version}</option>;
+      })
+    }
+  </select>
+</label>
+
+<script>
+  document.querySelectorAll<HTMLSelectElement>('[data-version-select]').forEach((select) => {
+    select.addEventListener('change', () => window.location.assign(select.value));
+  });
+</script>
+
+<style>
+  .version-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  select {
+    width: auto;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.35rem;
+    background: var(--sl-color-bg-nav);
+    color: var(--sl-color-text);
+    padding: 0.3rem 1.6rem 0.3rem 0.5rem;
+    font: inherit;
+    cursor: pointer;
+  }
+</style>
