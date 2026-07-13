@@ -1,13 +1,13 @@
 ---
 import LanguageSelect from '@astrojs/starlight/components/LanguageSelect.astro';
 import Search from '@astrojs/starlight/components/Search.astro';
-import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
 import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import BookTitle from './BookTitle.astro';
 import VersionSelect from './VersionSelect.astro';
 ---
 
 <div class="book-header">
-  <div class="title"><SiteTitle /></div>
+  <div class="title"><BookTitle /></div>
   <div class="search print:hidden"><Search /></div>
   <nav class="controls sl-hidden md:sl-flex print:hidden" aria-label="Book preferences">
     <VersionSelect />

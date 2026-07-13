@@ -1,0 +1,10 @@
+namespace Counters
+
+public class Counter
+    public value: Int = 0
+end
+
+function main()
+    local counter = Counter {}
+    print(counter.value)
+end

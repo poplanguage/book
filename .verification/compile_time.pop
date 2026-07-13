@@ -1,0 +1,15 @@
+namespace Metadata
+
+@CompileTime
+function doubled(value: Int): Int
+    return value * 2
+end
+
+const BufferSize: Int = doubled(512)
+
+@AttributeUsage(targets = { AttributeTarget.Function }, repeatable = false)
+public attribute Label(value: String)
+
+@Label("entry")
+public function start()
+end

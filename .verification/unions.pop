@@ -1,0 +1,21 @@
+namespace Search
+
+public union SearchResult
+    Found(value: String)
+    Missing
+end
+
+function describe(result: SearchResult)
+    match result
+    when SearchResult.Found(name) then
+        print("Found")
+        print(name)
+    when SearchResult.Missing then
+        print("Nothing was found")
+    end
+end
+
+function main()
+    local result: SearchResult = SearchResult.Found("Ada")
+    describe(result)
+end

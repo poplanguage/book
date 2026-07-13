@@ -1,0 +1,24 @@
+namespace Explorer
+
+function showArguments(arguments: Array<String>)
+    local index = 1
+
+    while Array.length(arguments) > index - 1 do
+        print(Array.get(arguments, index))
+        index = index + 1
+    end
+end
+
+function main(arguments: Array<String>)
+    local count = Array.length(arguments)
+
+    print("Argument count")
+    print(count)
+
+    if count > 0 then
+        print("Arguments")
+        showArguments(arguments)
+    else
+        print("No arguments were supplied")
+    end
+end

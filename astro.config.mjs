@@ -55,12 +55,7 @@ export default defineConfig({
     starlight({
       title: 'Pop Book',
       description: 'Learn Pop Lang through small, verified examples.',
-      favicon: '/favicon.svg',
-      logo: {
-        src: '../assets/pop.png',
-        alt: 'Pop Lang',
-        replacesTitle: false,
-      },
+      favicon: '/pop.png',
       defaultLocale: 'en',
       locales: {
         en: { label: 'English', lang: 'en' },
@@ -76,11 +71,11 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'Pop Lang on GitHub',
-          href: 'https://github.com/pop-lang/pop',
+          href: 'https://github.com/poplanguage/pop',
         },
       ],
       editLink: {
-        baseUrl: 'https://github.com/pop-lang/pop/edit/master/popbook/',
+        baseUrl: 'https://github.com/poplanguage/book/edit/main/',
       },
       lastUpdated: true,
       tableOfContents: false,
@@ -90,23 +85,48 @@ export default defineConfig({
       },
       sidebar: [
         {
-          label: 'Start',
-          translations: { 'pt-br': 'Início' },
+          label: '1. Getting Started',
+          translations: { 'pt-br': '1. Primeiros passos' },
           items: [{ autogenerate: { directory: '0.1.0-rc.2/start' } }],
         },
         {
-          label: 'Language',
-          translations: { 'pt-br': 'Linguagem' },
+          label: '2. Language Fundamentals',
+          translations: { 'pt-br': '2. Fundamentos da linguagem' },
           items: [{ autogenerate: { directory: '0.1.0-rc.2/language' } }],
         },
         {
-          label: 'Types',
-          translations: { 'pt-br': 'Tipos' },
+          label: '3. Types',
+          translations: { 'pt-br': '3. Tipos' },
           items: [{ autogenerate: { directory: '0.1.0-rc.2/types' } }],
         },
         {
-          label: 'Reference',
-          translations: { 'pt-br': 'Referência' },
+          label: '4. Data and Abstraction',
+          translations: { 'pt-br': '4. Dados e abstração' },
+          items: [{ autogenerate: { directory: '0.1.0-rc.2/data' } }],
+        },
+        {
+          label: '5. Modules and Packages',
+          translations: { 'pt-br': '5. Módulos e pacotes' },
+          items: [{ autogenerate: { directory: '0.1.0-rc.2/organization' } }],
+        },
+        {
+          label: '6. Compile Time',
+          translations: { 'pt-br': '6. Tempo de compilação' },
+          items: [{ autogenerate: { directory: '0.1.0-rc.2/compile-time' } }],
+        },
+        {
+          label: '7. Runtime and Backends',
+          translations: { 'pt-br': '7. Runtime e backends' },
+          items: [{ autogenerate: { directory: '0.1.0-rc.2/execution' } }],
+        },
+        {
+          label: '8. Tooling',
+          translations: { 'pt-br': '8. Ferramentas' },
+          items: [{ autogenerate: { directory: '0.1.0-rc.2/tooling' } }],
+        },
+        {
+          label: '9. Reference',
+          translations: { 'pt-br': '9. Referência' },
           items: [{ autogenerate: { directory: '0.1.0-rc.2/reference' } }],
         },
         {

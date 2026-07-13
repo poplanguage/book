@@ -1,0 +1,11 @@
+namespace Arrays
+
+function main()
+    local names: {String} = { "Ada", "Grace" }
+    print(Array.length(names))
+    print(Array.get(names, 1))
+
+    local scores = Array.create<<Int>>(3, 0)
+    scores[1] = 10
+    Array.fill(scores, 0)
+end

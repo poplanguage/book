@@ -1,0 +1,29 @@
+---
+import popLogo from '../assets/pop.png';
+import { defaultBookVersion } from '../data/versions';
+
+const locale = Astro.locals.starlightRoute.locale ?? 'en';
+const href = `${import.meta.env.BASE_URL}${locale}/${defaultBookVersion.slug}/`.replace(/\/+/g, '/');
+---
+
+<a {href} class="book-title" aria-label="Pop Book home">
+  <img src={popLogo.src} width="256" height="256" alt="" />
+  <span>Pop Book</span>
+</a>
+
+<style>
+  .book-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    color: var(--sl-color-text-accent);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  img { width: 1.75rem; height: 1.75rem; object-fit: contain; }
+  span { overflow: hidden; text-overflow: ellipsis; }
+</style>

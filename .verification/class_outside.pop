@@ -1,0 +1,15 @@
+namespace Counters
+
+public class Counter
+    public value: Int = 0
+end
+
+public function Counter:increment()
+    self.value = self.value + 1
+end
+
+function main()
+    local counter = Counter {}
+    counter:increment()
+    print(counter.value)
+end

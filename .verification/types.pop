@@ -1,0 +1,11 @@
+namespace Types
+
+function main()
+    local small: Int8 = 42
+    local octet: Byte = 255
+    local measurement: Float64 = 42
+    local entry: (String, Int) = ("Ada", 42)
+    local names: {String} = { "Ada", "Grace" }
+    local nickname = names[1]
+    local scores: {[String]: Int} = { ada = 10, grace = 20 }
+end

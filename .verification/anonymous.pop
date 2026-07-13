@@ -1,0 +1,9 @@
+namespace Functions
+
+function main()
+    local increment: function(value: Int): Int = function(value: Int): Int
+        return value + 1
+    end
+
+    print(increment(41))
+end

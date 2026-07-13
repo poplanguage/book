@@ -1,0 +1,10 @@
+namespace Hello
+
+function main(arguments: Array<String>)
+    if Array.length(arguments) > 0 then
+        local name = Array.get(arguments, 1)
+        print(name)
+    else
+        print("Hello, stranger")
+    end
+end

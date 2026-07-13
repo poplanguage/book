@@ -1,15 +1,18 @@
 ---
-title: Pop Book
-description: Learn the implemented Pop Lang 0.1.0-rc.2 surface from real compiler behavior.
+title: The Pop Book
+description: Learn Pop one small, working program at a time.
 ---
 
-# The Pop Book
+```pop
+namespace Hello
 
-This edition describes only behavior present in the **0.1.0-rc.2 compiler**. Each page is derived from compiler code and tests, and future releases get their own edition instead of silently changing old documentation.
+function main()
+    print("Hello from Pop!")
+end
+```
 
-Begin with [Welcome to Pop Lang](./start/welcome/), then follow the chapters in the sidebar. Each chapter covers one idea and stays small enough to translate independently.
+Pop is a statically typed, compiled language with a small syntax built around functions and blocks closed by `end`. This book begins with complete programs, introduces each idea when it becomes useful, and grows into a precise reference for the implemented language.
 
-- **Start** — install the toolchain and run your first program.
-- **Language** — bindings, functions, control flow, data declarations, and modules.
-- **Types** — every implemented primitive and compound type.
-- **Reference** — keywords, operators, diagnostics, and release support.
+Start with [Introduction](./start/introduction/) if Pop is new to you. The later parts cover primitive types, arrays, records, tagged unions, classes, interfaces, namespaces, compile-time attributes, native execution, and every command available in this edition.
+
+This edition follows Pop 0.1.0-rc.2. Use the version selector in the navigation bar when reading a different release.

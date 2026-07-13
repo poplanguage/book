@@ -1,0 +1,21 @@
+namespace Players
+
+public record Player
+    name: String
+    score: Int = 0
+end
+
+function newPlayer(name: String): Player
+    return { name = name }
+end
+
+function award(player: Player, points: Int): Player
+    return player with { score = player.score + points }
+end
+
+function main()
+    local player = newPlayer("Ada")
+    local winner = award(player, 10)
+    print(winner.name)
+    print(winner.score)
+end

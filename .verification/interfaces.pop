@@ -1,0 +1,23 @@
+namespace Names
+
+public interface Named
+    function name(): String
+end
+
+public class User implements Named
+    private value: String = "Ada"
+
+    public function User:name(): String
+        return self.value
+    end
+end
+
+function greet(value: Named)
+    print("Hello")
+    print(value:name())
+end
+
+function main()
+    local user = User {}
+    greet(user)
+end
