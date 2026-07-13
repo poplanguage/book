@@ -1,9 +1,10 @@
 ---
 import popLogo from '../assets/pop.png';
 import { defaultBookVersion } from '../data/versions';
+import { bookPath } from '../utils/paths';
 
 const locale = Astro.locals.starlightRoute.locale ?? 'en';
-const href = `${import.meta.env.BASE_URL}${locale}/${defaultBookVersion.slug}/`.replace(/\/+/g, '/');
+const href = bookPath(`${locale}/${defaultBookVersion.slug}/`);
 ---
 
 <a {href} class="book-title" aria-label="Pop Book home">

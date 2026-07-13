@@ -1,8 +1,9 @@
 ---
 import Redirect from '../../components/Redirect.astro';
 import { defaultBookVersion } from '../../data/versions';
+import { bookPath } from '../../utils/paths';
 
-const target = `${import.meta.env.BASE_URL}en/${defaultBookVersion.slug}/`;
+const target = bookPath(`en/${defaultBookVersion.slug}/`);
 ---
 
 <Redirect {target} />

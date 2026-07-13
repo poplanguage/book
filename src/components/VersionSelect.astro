@@ -1,9 +1,9 @@
 ---
 import { orderedBookVersions } from '../data/versions';
+import { bookPath } from '../utils/paths';
 
 const locale = Astro.locals.starlightRoute.locale ?? 'en';
 const currentPath = Astro.url.pathname;
-const base = import.meta.env.BASE_URL;
 const label = locale === 'pt-br' ? 'Versão' : 'Version';
 ---
 
@@ -12,7 +12,7 @@ const label = locale === 'pt-br' ? 'Versão' : 'Version';
   <select aria-label={label} data-version-select>
     {
       orderedBookVersions.map(({ version, slug }) => {
-        const href = `${base}${locale}/${slug}/`.replace(/\/+/g, '/');
+        const href = bookPath(`${locale}/${slug}/`);
         return <option value={href} selected={currentPath.includes(`/${slug}/`)}>{version}</option>;
       })
     }
