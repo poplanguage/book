@@ -1,5 +1,5 @@
 ---
-title: Project: an argument explorer
+title: "Project: an argument explorer"
 description: Combine variables, functions, conditions, arrays, and loops in one program.
 sidebar:
   order: 8
