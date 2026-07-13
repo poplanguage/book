@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import { createRequire } from 'node:module';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, extname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,7 +14,10 @@ const [owner, repositoryName] = repository?.split('/') ?? [];
 const isUserPage = repositoryName?.toLowerCase() === `${owner?.toLowerCase()}.github.io`;
 const base = repositoryName && !isUserPage ? `/${repositoryName}` : undefined;
 
-const englishDocsRoot = fileURLToPath(new URL('./src/content/docs/en/', import.meta.url));
+const docsRoots = {
+  en: fileURLToPath(new URL('./src/content/docs/en/', import.meta.url)),
+  'pt-br': fileURLToPath(new URL('./src/content/docs/pt-br/', import.meta.url)),
+};
 
 function unquote(value) {
   const first = value.at(0);
@@ -41,16 +44,16 @@ function humanize(value) {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
-function pageSlug(path) {
-  return relative(englishDocsRoot, path)
+function pageSlug(path, docsRoot) {
+  return relative(docsRoot, path)
     .replaceAll('\\', '/')
     .replace(/\.(?:md|mdx)$/, '')
     .replace(/\/index$/, '')
     .replace(/^0\.1\.0-rc\.(\d+)(?=\/|$)/, '010-rc$1');
 }
 
-function pageLink(path) {
-  return `/${pageSlug(path)}/`;
+function pageLink(path, docsRoot) {
+  return `/${pageSlug(path, docsRoot)}/`;
 }
 
 function documentationFiles(directory) {
@@ -59,7 +62,7 @@ function documentationFiles(directory) {
   );
 }
 
-function orderedSidebarNodes(directory) {
+function orderedSidebarNodes(directory, locale, docsRoot) {
   const nodes = [];
 
   for (const entry of documentationFiles(directory)) {
@@ -72,12 +75,16 @@ function orderedSidebarNodes(directory) {
       nodes.push({
         order: metadata.order,
         label: metadata.label,
-        item: { label: metadata.label, link: pageLink(path) },
+        item: {
+          label: metadata.label,
+          link: pageLink(path, docsRoot),
+          attrs: { 'data-sidebar-locale': locale },
+        },
       });
       continue;
     }
 
-    const childNodes = orderedSidebarNodes(path);
+    const childNodes = orderedSidebarNodes(path, locale, docsRoot);
     const indexEntry = documentationFiles(path).find(
       (child) => !child.isDirectory() && /^index\.mdx?$/.test(child.name),
     );
@@ -94,8 +101,11 @@ function orderedSidebarNodes(directory) {
           items: [
             {
               label: metadata.label,
-              link: pageLink(indexPath),
-              attrs: { 'data-category-index': 'true' },
+              link: pageLink(indexPath, docsRoot),
+              attrs: {
+                'data-category-index': 'true',
+                'data-sidebar-locale': locale,
+              },
             },
             ...childNodes.map(({ item }) => item),
           ],
@@ -124,8 +134,18 @@ function orderedSidebarNodes(directory) {
   );
 }
 
-function documentationSidebar(directory) {
-  return orderedSidebarNodes(join(englishDocsRoot, directory)).map(({ item }) => item);
+function documentationSidebar(locale, directory) {
+  const docsRoot = docsRoots[locale];
+  const path = join(docsRoot, directory);
+  if (!existsSync(path)) return [];
+  return orderedSidebarNodes(path, locale, docsRoot).map(({ item }) => item);
+}
+
+function versionedDocumentationSidebar(section) {
+  return Object.keys(docsRoots).flatMap((locale) => [
+    ...documentationSidebar(locale, `0.1.0-rc.2/${section}`),
+    ...documentationSidebar(locale, `0.1.0-rc.3/${section}`),
+  ]);
 }
 
 const popLanguage = {
@@ -235,79 +255,50 @@ export default defineConfig({
       sidebar: [
         {
           label: '1. Getting Started',
-          translations: { 'pt-br': '1. Primeiros passos' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/start'),
-            ...documentationSidebar('0.1.0-rc.3/start'),
-          ],
+          translations: { 'pt-BR': '1. Primeiros passos' },
+          items: versionedDocumentationSidebar('start'),
         },
         {
           label: '2. Language Fundamentals',
-          translations: { 'pt-br': '2. Fundamentos da linguagem' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/language'),
-            ...documentationSidebar('0.1.0-rc.3/language'),
-          ],
+          translations: { 'pt-BR': '2. Fundamentos da linguagem' },
+          items: versionedDocumentationSidebar('language'),
         },
         {
           label: '3. Types',
-          translations: { 'pt-br': '3. Tipos' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/types'),
-            ...documentationSidebar('0.1.0-rc.3/types'),
-          ],
+          translations: { 'pt-BR': '3. Tipos' },
+          items: versionedDocumentationSidebar('types'),
         },
         {
           label: '4. Data and Abstraction',
-          translations: { 'pt-br': '4. Dados e abstração' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/data'),
-            ...documentationSidebar('0.1.0-rc.3/data'),
-          ],
+          translations: { 'pt-BR': '4. Dados e abstração' },
+          items: versionedDocumentationSidebar('data'),
         },
         {
           label: '5. Modules and Packages',
-          translations: { 'pt-br': '5. Módulos e pacotes' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/organization'),
-            ...documentationSidebar('0.1.0-rc.3/organization'),
-          ],
+          translations: { 'pt-BR': '5. Módulos e pacotes' },
+          items: versionedDocumentationSidebar('organization'),
         },
         {
           label: '6. Compile Time',
-          translations: { 'pt-br': '6. Tempo de compilação' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/compile-time'),
-            ...documentationSidebar('0.1.0-rc.3/compile-time'),
-          ],
+          translations: { 'pt-BR': '6. Tempo de compilação' },
+          items: versionedDocumentationSidebar('compile-time'),
         },
         {
           label: '7. Runtime and Backends',
-          translations: { 'pt-br': '7. Runtime e backends' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/execution'),
-            ...documentationSidebar('0.1.0-rc.3/execution'),
-          ],
+          translations: { 'pt-BR': '7. Runtime e backends' },
+          items: versionedDocumentationSidebar('execution'),
         },
         {
           label: '8. Tooling',
-          translations: { 'pt-br': '8. Ferramentas' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/tooling'),
-            ...documentationSidebar('0.1.0-rc.3/tooling'),
-          ],
+          translations: { 'pt-BR': '8. Ferramentas' },
+          items: versionedDocumentationSidebar('tooling'),
         },
         {
           label: '9. Reference',
-          translations: { 'pt-br': '9. Referência' },
-          items: [
-            ...documentationSidebar('0.1.0-rc.2/reference'),
-            ...documentationSidebar('0.1.0-rc.3/reference'),
-          ],
+          translations: { 'pt-BR': '9. Referência' },
+          items: versionedDocumentationSidebar('reference'),
         },
         {
-          label: 'Contributing',
-          translations: { 'pt-br': 'Contribuindo' },
           slug: 'contributing',
         },
       ],

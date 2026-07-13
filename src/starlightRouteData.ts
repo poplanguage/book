@@ -19,17 +19,24 @@ function normalizeVersionLinks(entries: SidebarEntry[]): SidebarEntry[] {
   );
 }
 
-function forVersion(entries: SidebarEntry[], versionPath: string): SidebarEntry[] {
+function forLocaleAndVersion(
+  entries: SidebarEntry[],
+  locale: string,
+  versionPath: string,
+): SidebarEntry[] {
   const filtered: SidebarEntry[] = [];
 
   for (const entry of entries) {
     if (entry.type === 'link') {
+      const entryLocale = entry.attrs['data-sidebar-locale'];
       const isVersioned = /\/010-rc\d+(?:\/|$)/.test(entry.href);
-      if (!isVersioned || entry.href.includes(versionPath)) filtered.push(entry);
+      const isSelectedLocale = !entryLocale || entryLocale === locale;
+      const isSelectedVersion = !isVersioned || entry.href.includes(versionPath);
+      if (isSelectedLocale && isSelectedVersion) filtered.push(entry);
       continue;
     }
 
-    const versionEntries = forVersion(entry.entries, versionPath);
+    const versionEntries = forLocaleAndVersion(entry.entries, locale, versionPath);
     if (versionEntries.length > 0) filtered.push({ ...entry, entries: versionEntries });
   }
 
@@ -38,6 +45,7 @@ function forVersion(entries: SidebarEntry[], versionPath: string): SidebarEntry[
 
 export const onRequest = defineRouteMiddleware((context) => {
   const route = context.locals.starlightRoute;
+  const selectedLocale = route.locale ?? 'en';
   const selectedVersion = context.url.pathname.match(/\/010-(rc\d+)(?:\/|$)/)?.[1];
 
   if (!selectedVersion) return;
@@ -47,7 +55,11 @@ export const onRequest = defineRouteMiddleware((context) => {
     attrs: { 'data-pagefind-filter': 'version', content: selectedVersion },
   });
 
-  route.sidebar = forVersion(normalizeVersionLinks(route.sidebar), `/010-${selectedVersion}/`);
+  route.sidebar = forLocaleAndVersion(
+    normalizeVersionLinks(route.sidebar),
+    selectedLocale,
+    `/010-${selectedVersion}/`,
+  );
 
   const links = flatten(route.sidebar);
   const currentIndex = links.findIndex((link) => link.isCurrent);
