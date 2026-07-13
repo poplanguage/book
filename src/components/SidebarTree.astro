@@ -63,7 +63,7 @@ function categoryLabel(label: string): string {
                   class="category-link"
                   href={normalizedHref(index.href)}
                   aria-current={index.isCurrent ? 'page' : undefined}
-                  onclick="event.stopPropagation()"
+                  data-category-link
                 >
                   <span>{categoryLabel(entry.label)}</span>
                 </a>
@@ -83,6 +83,12 @@ function categoryLabel(label: string): string {
     })
   }
 </ul>
+
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('[data-category-link]').forEach((link) => {
+    link.addEventListener('click', (event) => event.stopPropagation());
+  });
+</script>
 
 <style>
   @layer starlight.core {
